@@ -1,0 +1,15 @@
+## Interface: 100007
+## Title: mBagsWowHeadLinks
+## Author: Macka - JBD
+## Version: 0.0.1
+## License: All Rights Reserved
+## Notes: Create wowHead links from bag items
+## SavedVariables: MBagsWowHeadLinksVariables
+## OptionalDeps: LibDBIcon-1.0
+
+embeds.xml 
+addon.lua
+
+core\ArtTextureID.lua
+mBagsWowHeadLinks.lua
+core\slashcmds.lua

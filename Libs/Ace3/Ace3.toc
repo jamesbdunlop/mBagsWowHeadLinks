@@ -1,0 +1,14 @@
+## Interface: 90207
+
+## Title: Lib: Ace3
+## Notes: AddOn development framework
+## Author: Ace3 Development Team
+## X-Website: http://www.wowace.com
+## X-Category: Library
+## X-License: Limited BSD
+## Version: Release-r1294
+
+LibStub\LibStub.lua
+AceAddon-3.0\AceAddon-3.0.xml
+AceGUI-3.0\AceGUI-3.0.xml
+Ace3.lua
