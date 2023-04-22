@@ -35,14 +35,26 @@ function mBagsWowHeadLinks:listBagItems(ignoreSoulBound, seachString)
             end
         end
     end
-    SendSystemMessage("Swapped to player inventory!")
+    -- SendSystemMessage("Swapped to player inventory!")
     return BAGDUMPV1
 end
 
 function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
     BANKDUMPV1 = {}
     -- (You need to be at the bank for bank inventory IDs to return valid results) WTF!
-    for bag = 6, 14 do
+    -- DO THE BASE BANK BAG FIRST
+    for slot = 1, C_Container.GetContainerNumSlots(BANK_CONTAINER) do
+        local itemLink = C_Container.GetContainerItemLink(BANK_CONTAINER, slot)
+        if itemLink then
+            local itemName = GetItemInfo(itemLink)
+            local itemInfo = C_Container.GetContainerItemInfo(BANK_CONTAINER, slot)
+            if itemName ~= nil and itemInfo ~= nil and string.find(itemName, seachString) ~= nil then
+                mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BANKDUMPV1, ignoreSoulBound)
+            end
+        end
+    end
+    -- Now do the rest of the bank bags..
+    for bag = 6, 13 do
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
             local itemLink = C_Container.GetContainerItemLink(bag, slot)
             if itemLink then
@@ -98,7 +110,7 @@ function mBagsWowHeadLinks:BagPane()
 
     local function PopulateDropdown(toShow, scrollFrame, editBox, iconSize)
         scrollFrame:ReleaseChildren()
-        for x, itemInfo in ipairs(toShow) do
+        for _, itemInfo in ipairs(toShow) do
             local itemName = itemInfo[1]
             local icon = itemInfo[2]
             -- local clickableUrl = itemInfo[3]
@@ -125,6 +137,8 @@ function mBagsWowHeadLinks:BagPane()
                  GameTooltip:Show() end)
             interActiveIcon:SetCallback("OnClick", function(widget) 
                 editBox:SetText(widget:GetUserData("url"))
+                editBox:SetFocus()
+                editBox:HighlightText(1, 2500)
             end)
             
             scrollFrame:AddChild(interActiveIcon)
@@ -150,9 +164,6 @@ function mBagsWowHeadLinks:BagPane()
     urlInput:SetFullWidth(true)
     urlInput:SetText("")
     urlInput:SetLabel("WowHeadUrl:")
-    -- urlInput:SetCallback("OnTextChanged", function() urlInput:HighlightText() end)
-    -- urlInput:SetCallback("OnEnter", function(widget, eventName, text) urlInput:HighlightText() end)
-    -- urlInput:SetCallback("OnEnterPressed", function() urlInput:HighlightText() end)
 
     local searchInput = AceGUI:Create("EditBox")
     -- searchInput:SetFullWidth(true)
@@ -178,7 +189,6 @@ function mBagsWowHeadLinks:BagPane()
     iconSize:SetSliderValues(10, 64, 1)
     iconSize:SetValue(24)
     iconSize:SetCallback("OnValueChanged", function(self, event, value) 
-        print("value: %d", value)
         local bagData = updateData(currGroupIndex, ignoreValue)
         currentIconSize = value
         PopulateDropdown(bagData, scrollFrame, urlInput, iconSize:GetValue())
