@@ -1,5 +1,9 @@
 local AceGUI = LibStub("AceGUI-3.0")
 
+if MBagsWowHeadLinksVariables == nil then
+    MBagsWowHeadLinksVariables = {}
+end
+
 function mBagsWowHeadLinks:OnInitialize()
 end
 
@@ -9,15 +13,15 @@ end
 function mBagsWowHeadLinks:OnDisable()
 end
 
-function mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, data, ignoreSoulBound)
+function mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, datatable, ignoreSoulBound)
     local url = "https://www.wowhead.com/item="..itemInfo["itemID"]
     local finalurl = "|Hurl:" ..url .. "|h[" .. itemName .. "]|h"
     local isBound = itemInfo['isBound']
     if not ignoreSoulBound and isBound then
-        table.insert(data, {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"]})
+        table.insert(datatable, {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"]})
     elseif ignoreSoulBound and isBound then
     else
-        table.insert(data, {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"]})
+        table.insert(datatable, {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"]})
     end
 end
 
@@ -42,6 +46,7 @@ end
 function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
     BANKDUMPV1 = {}
     -- (You need to be at the bank for bank inventory IDs to return valid results) WTF!
+    local currentCache = MBagsWowHeadLinksVariables["bankitems"] or {}
     -- DO THE BASE BANK BAG FIRST
     for slot = 1, C_Container.GetContainerNumSlots(BANK_CONTAINER) do
         local itemLink = C_Container.GetContainerItemLink(BANK_CONTAINER, slot)
@@ -67,11 +72,23 @@ function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
         end
     end
     SendSystemMessage("Swapped to open bank bags! If you don't see anything, open your bank!")
+    if #BANKDUMPV1 == 0 then
+        local searched = {}
+        for x, data in ipairs(currentCache) do
+            local itemName = data[1]
+            local itemInfo = data[2]
+            if itemName ~= nil and string.find(itemName, seachString) ~= nil then
+                table.insert(searched, data)
+            end
+        end
+        return searched
+    end
     return BANKDUMPV1
 end
 
 function mBagsWowHeadLinks:listBankReagentItems(ignoreSoulBound, seachString)
     BANKRDUMPV1 = {}
+    local currentCache = MBagsWowHeadLinksVariables["bankreagentitems"] or {}
     -- (You need to be at the bank for bank inventory IDs to return valid results) WTF!
     for slot = 1, C_Container.GetContainerNumSlots(REAGENTBANK_CONTAINER) do
         local itemLink = C_Container.GetContainerItemLink(REAGENTBANK_CONTAINER, slot)
@@ -84,6 +101,17 @@ function mBagsWowHeadLinks:listBankReagentItems(ignoreSoulBound, seachString)
         end
     end
     SendSystemMessage("Swapped to Bank reagent bag! If you don't see anything, open your bank!")
+    if #BANKRDUMPV1 == 0 then
+        local searched = {}
+        for x, data in ipairs(currentCache) do
+            local itemName = data[1]
+            local itemInfo = data[2]
+            if itemName ~= nil and string.find(itemName, seachString) ~= nil then
+                table.insert(searched, data)
+            end
+        end
+        return searched
+    end
     return BANKRDUMPV1
 end
 
@@ -101,9 +129,10 @@ function mBagsWowHeadLinks:BagPane()
             toShow = mBagsWowHeadLinks:listBagItems(ignoreValue, seachString)
         elseif groupIndex == 2 then
             toShow = mBagsWowHeadLinks:listBankItems(ignoreValue, seachString)
+            MBagsWowHeadLinksVariables["bankitems"] = toShow
         else
             toShow = mBagsWowHeadLinks:listBankReagentItems(ignoreValue, seachString)
-
+            MBagsWowHeadLinksVariables["bankreagentitems"] = toShow
         end
         return toShow
     end
@@ -139,6 +168,8 @@ function mBagsWowHeadLinks:BagPane()
                 editBox:SetText(widget:GetUserData("url"))
                 editBox:SetFocus()
                 editBox:HighlightText(1, 2500)
+                local hyperlink = "|cff007995|Hurl:" .. url .."|h[".. itemName .."]|h|r"
+                print(hyperlink)
             end)
             
             scrollFrame:AddChild(interActiveIcon)
