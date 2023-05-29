@@ -1,8 +1,10 @@
 local AceGUI = LibStub("AceGUI-3.0")
 
-if MBagsWowHeadLinksVariables == nil then
-    MBagsWowHeadLinksVariables = {}
-end
+MBagsWowHeadLinksVariables = {}
+local playerName = UnitName("player")
+mBagPlayerCache = MBagsWowHeadLinksVariables[playerName] or {}
+mBankItemsCurrentCache = mBagPlayerCache["bankitems"] or {}
+mBankRegItemsCurrentCache = mBagPlayerCache["bankreagentitems"] or {}
 
 function mBagsWowHeadLinks:OnInitialize()
 end
@@ -46,7 +48,7 @@ end
 function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
     BANKDUMPV1 = {}
     -- (You need to be at the bank for bank inventory IDs to return valid results) WTF!
-    local currentCache = MBagsWowHeadLinksVariables["bankitems"] or {}
+    
     -- DO THE BASE BANK BAG FIRST
     for slot = 1, C_Container.GetContainerNumSlots(BANK_CONTAINER) do
         local itemLink = C_Container.GetContainerItemLink(BANK_CONTAINER, slot)
@@ -74,7 +76,7 @@ function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
     SendSystemMessage("Swapped to open bank bags! If you don't see anything, open your bank!")
     if #BANKDUMPV1 == 0 then
         local searched = {}
-        for x, data in ipairs(currentCache) do
+        for x, data in ipairs(mBankItemsCurrentCache) do
             local itemName = data[1]
             local itemInfo = data[2]
             if itemName ~= nil and string.find(itemName, seachString) ~= nil then
@@ -83,12 +85,12 @@ function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
         end
         return searched
     end
+    mBankItemsCurrentCache = BANKDUMPV1
     return BANKDUMPV1
 end
 
 function mBagsWowHeadLinks:listBankReagentItems(ignoreSoulBound, seachString)
     BANKRDUMPV1 = {}
-    local currentCache = MBagsWowHeadLinksVariables["bankreagentitems"] or {}
     -- (You need to be at the bank for bank inventory IDs to return valid results) WTF!
     for slot = 1, C_Container.GetContainerNumSlots(REAGENTBANK_CONTAINER) do
         local itemLink = C_Container.GetContainerItemLink(REAGENTBANK_CONTAINER, slot)
@@ -103,7 +105,7 @@ function mBagsWowHeadLinks:listBankReagentItems(ignoreSoulBound, seachString)
     SendSystemMessage("Swapped to Bank reagent bag! If you don't see anything, open your bank!")
     if #BANKRDUMPV1 == 0 then
         local searched = {}
-        for x, data in ipairs(currentCache) do
+        for x, data in ipairs(mBankRegItemsCurrentCache) do
             local itemName = data[1]
             local itemInfo = data[2]
             if itemName ~= nil and string.find(itemName, seachString) ~= nil then
@@ -112,6 +114,7 @@ function mBagsWowHeadLinks:listBankReagentItems(ignoreSoulBound, seachString)
         end
         return searched
     end
+    mBankRegItemsCurrentCache = BANKRDUMPV1
     return BANKRDUMPV1
 end
 
@@ -129,10 +132,8 @@ function mBagsWowHeadLinks:BagPane()
             toShow = mBagsWowHeadLinks:listBagItems(ignoreValue, seachString)
         elseif groupIndex == 2 then
             toShow = mBagsWowHeadLinks:listBankItems(ignoreValue, seachString)
-            MBagsWowHeadLinksVariables["bankitems"] = toShow
         else
             toShow = mBagsWowHeadLinks:listBankReagentItems(ignoreValue, seachString)
-            MBagsWowHeadLinksVariables["bankreagentitems"] = toShow
         end
         return toShow
     end
