@@ -1,12 +1,22 @@
 local AceGUI = LibStub("AceGUI-3.0")
 
-MBagsWowHeadLinksVariables = {}
-local playerName = UnitName("player")
-mBagPlayerCache = MBagsWowHeadLinksVariables[playerName] or {}
-mBankItemsCurrentCache = mBagPlayerCache["bankitems"] or {}
-mBankRegItemsCurrentCache = mBagPlayerCache["bankreagentitems"] or {}
-
 function mBagsWowHeadLinks:OnInitialize()
+    if MBagsWowHeadLinksVariables == nil then
+        MBagsWowHeadLinksVariables = {}
+    end
+    
+    local playerName = UnitName("player")
+    if not MBagsWowHeadLinksVariables[playerName] then
+        MBagsWowHeadLinksVariables[playerName] = {}
+    end
+    if not MBagsWowHeadLinksVariables[playerName]["bankitems"] then
+        MBagsWowHeadLinksVariables[playerName]["bankitems"] = {}
+    end
+    if not MBagsWowHeadLinksVariables[playerName]["bankreagentitems"] then
+        MBagsWowHeadLinksVariables[playerName]["bankreagentitems"] = {}
+    end
+    mBankItemsCurrentCache = MBagsWowHeadLinksVariables[playerName]["bankitems"]
+    mBankRegItemsCurrentCache = MBagsWowHeadLinksVariables[playerName]["bankreagentitems"]
 end
 
 function mBagsWowHeadLinks:OnEnable()
@@ -16,7 +26,7 @@ function mBagsWowHeadLinks:OnDisable()
 end
 
 function mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, datatable, ignoreSoulBound)
-    local url = "https://www.wowhead.com/item="..itemInfo["itemID"]
+    local url = "https://www.wowhead.com/item="..itemInfo["itemID"].."#comments"
     local finalurl = "|Hurl:" ..url .. "|h[" .. itemName .. "]|h"
     local isBound = itemInfo['isBound']
     if not ignoreSoulBound and isBound then
@@ -46,9 +56,8 @@ function mBagsWowHeadLinks:listBagItems(ignoreSoulBound, seachString)
 end
 
 function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
-    BANKDUMPV1 = {}
     -- (You need to be at the bank for bank inventory IDs to return valid results) WTF!
-    
+    BANKDUMPV1 = {}
     -- DO THE BASE BANK BAG FIRST
     for slot = 1, C_Container.GetContainerNumSlots(BANK_CONTAINER) do
         local itemLink = C_Container.GetContainerItemLink(BANK_CONTAINER, slot)
@@ -73,7 +82,6 @@ function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
             end
         end
     end
-    SendSystemMessage("Swapped to open bank bags! If you don't see anything, open your bank!")
     if #BANKDUMPV1 == 0 then
         local searched = {}
         for x, data in ipairs(mBankItemsCurrentCache) do
@@ -84,8 +92,11 @@ function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
             end
         end
         return searched
+    else
+        for idx, entry in ipairs(BANKDUMPV1) do
+            mBankItemsCurrentCache[idx] = entry
+        end
     end
-    mBankItemsCurrentCache = BANKDUMPV1
     return BANKDUMPV1
 end
 
@@ -102,7 +113,6 @@ function mBagsWowHeadLinks:listBankReagentItems(ignoreSoulBound, seachString)
             end
         end
     end
-    SendSystemMessage("Swapped to Bank reagent bag! If you don't see anything, open your bank!")
     if #BANKRDUMPV1 == 0 then
         local searched = {}
         for x, data in ipairs(mBankRegItemsCurrentCache) do
@@ -113,8 +123,11 @@ function mBagsWowHeadLinks:listBankReagentItems(ignoreSoulBound, seachString)
             end
         end
         return searched
+    else
+        for idx, entry in ipairs(BANKRDUMPV1) do
+            mBankRegItemsCurrentCache[idx] = entry
+        end
     end
-    mBankRegItemsCurrentCache = BANKRDUMPV1
     return BANKRDUMPV1
 end
 
