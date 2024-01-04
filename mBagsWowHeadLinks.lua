@@ -60,8 +60,11 @@ function mBagsWowHeadLinks:listBagItems(ignoreSoulBound, seachString)
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
             local itemLink = C_Container.GetContainerItemLink(bag, slot)
             if itemLink then
-                local itemName = GetItemInfo(itemLink)                
+                local itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType,
+                itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType,
+                expacID, setID, isCraftingReagent = GetItemInfo(itemLink)                
                 local itemInfo = C_Container.GetContainerItemInfo(bag, slot)
+                if seachString == nil or itemName == nil then print(itemLink) end
                 if itemName ~= nil and itemInfo ~= nil and string.find(itemName, seachString) ~= nil then
                     mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BAGDUMPV1, ignoreSoulBound, itemLink)
                 end
@@ -74,7 +77,6 @@ end
 
 function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
     -- (You need to be at the bank for bank inventory IDs to return valid results) WTF!
-    print("LISTING BANK ITEMS")
     BANKDUMPV1 = {}
     -- DO THE BASE BANK BAG FIRST
     for slot = 1, C_Container.GetContainerNumSlots(BANK_CONTAINER) do
@@ -192,8 +194,10 @@ local CURRENTEXPAC = "Dragonflight"
 
 function mBagsWowHeadLinks:BagPane()
     local function updateData(groupIndex, ignoreValue, seachString)
+        if seachString == nil then seachString = MBGSearchInput:GetText() end
         if seachString == nil then seachString = "" end
         local toShow
+        
         if groupIndex == 1 then
             -- print("populating inventory items now")
             toShow = mBagsWowHeadLinks:listBagItems(ignoreValue, seachString)
@@ -321,7 +325,7 @@ function mBagsWowHeadLinks:BagPane()
                                 editBox:SetFocus()
                                 editBox:HighlightText(1, 2500)
                                 local hyperlink = "|cff007995|Hurl:" .. url .."|h[".. itemName .."]|h|r"
-                                print(hyperlink)
+                                -- print(hyperlink)
                             end)
                             
                             -- scrollContainer:AddChild(interActiveIcon)
@@ -361,11 +365,11 @@ function mBagsWowHeadLinks:BagPane()
     urlInput:SetText("")
     urlInput:SetLabel("WowHeadUrl:")
 
-    local searchInput = AceGUI:Create("EditBox")
+    MBGSearchInput = AceGUI:Create("EditBox")
     -- searchInput:SetFullWidth(true)
-    searchInput:SetText("")
-    searchInput:SetLabel("Search:")
-    searchInput:SetCallback("OnTextChanged", function(self, event, value)
+    MBGSearchInput:SetText("")
+    MBGSearchInput:SetLabel("Search:")
+    MBGSearchInput:SetCallback("OnTextChanged", function(self, event, value)
         local bagData = updateData(currGroupIndex, ignoreValue, value)
         PopulateDropdown(bagData, scrollContainer, urlInput, currentIconSize)
     end)
@@ -374,7 +378,7 @@ function mBagsWowHeadLinks:BagPane()
     -- searchInputClear:SetFullWidth(true)
     searchInputClear:SetText("Clear Search")
     searchInputClear:SetCallback("OnClick", function()
-        searchInput:SetText("")
+        MBGSearchInput:SetText("")
         local bagData = updateData(currGroupIndex, ignoreValue, "")
         PopulateDropdown(bagData, scrollContainer, urlInput, currentIconSize)
     end)
@@ -426,7 +430,7 @@ function mBagsWowHeadLinks:BagPane()
     local searchGrp = AceGUI:Create("SimpleGroup")
     searchGrp:SetFullWidth(true)
     searchGrp:SetLayout("Flow")
-    searchGrp:AddChild(searchInput)
+    searchGrp:AddChild(MBGSearchInput)
     searchGrp:AddChild(searchInputClear)
     searchGrp:AddChild(iconSize)
 
