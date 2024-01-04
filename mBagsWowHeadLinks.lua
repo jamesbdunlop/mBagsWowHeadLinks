@@ -3,11 +3,9 @@ local AceGUI = LibStub("AceGUI-3.0")
 --# TODO take all the bank items even if soulbound or not into the cache!
 
 function mBagsWowHeadLinks:OnInitialize()
-
 end
 
 function mBagsWowHeadLinks:OnEnable()
-    print("==============================")
     if MBagsWowHeadLinksVariables == nil then
         MBagsWowHeadLinksVariables = {}
     end
@@ -26,6 +24,8 @@ function mBagsWowHeadLinks:OnEnable()
         MBagsWowHeadLinksVariables[playerName]["bankreagentitems"] = {}
     end
 
+    -- MBagsWowHeadLinksVariables[playerName]["bankitems"] = {}
+    -- MBagsWowHeadLinksVariables[playerName]["bankreagentitems"] = {}
     mBankItemsCurrentCache = MBagsWowHeadLinksVariables[playerName]["bankitems"]
     mBankRegItemsCurrentCache = MBagsWowHeadLinksVariables[playerName]["bankreagentitems"]
 
@@ -33,14 +33,7 @@ function mBagsWowHeadLinks:OnEnable()
         -- print("Setting default iconSize to 24")
         MBagsWowHeadLinksVariables[playerName]["iconSize"] = 24
     end
-    -- print("MWowhead bags init complete")
-    -- for k, tbl in pairs(MBagsWowHeadLinksVariables) do 
-    --     if k == "Mackeey" then 
-    --         for k1, v1 in pairs(tbl) do
-    --             print(k1, v1)
-    --         end
-    --     end
-    -- end
+
 end
 
 function mBagsWowHeadLinks:OnDisable()
@@ -277,10 +270,6 @@ function mBagsWowHeadLinks:BagPane()
                     stuffFrame:SetTitle("ITEMS")
                     stuffFrame:SetLayout("Flow")
                     stuffFrame:SetFullWidth(true)
-                    
-                    scrollFrm:AddChild(expacInlineGroup)
-                    group:AddChild(scrollFrm)
-                    
                     for _, key in ipairs(sortedKeys) do
                         itemInfo = toShow[key]
                         local expacID = itemInfo[19]
@@ -339,6 +328,9 @@ function mBagsWowHeadLinks:BagPane()
                     end
                     if #craftedFrame.frame:GetChildren() >= 0 then expacInlineGroup:AddChild(craftedFrame) end
                     if #stuffFrame.frame:GetChildren() >= 0 then expacInlineGroup:AddChild(stuffFrame) end
+                    
+                    scrollFrm.content.obj:AddChild(expacInlineGroup)
+                    group.content.obj:AddChild(scrollFrm)
                 end
             end
         end)
