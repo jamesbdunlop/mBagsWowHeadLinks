@@ -3,8 +3,6 @@ local AceGUI = LibStub("AceGUI-3.0")
 --# TODO take all the bank items even if soulbound or not into the cache!
 
 function mBagsWowHeadLinks:OnInitialize()
-
-
     if MBagsWowHeadLinksVariables == nil then
         MBagsWowHeadLinksVariables = {}
     end
@@ -19,11 +17,8 @@ function mBagsWowHeadLinks:OnInitialize()
     if not MBagsWowHeadLinksVariables[playerName]["bankreagentitems"] then
         MBagsWowHeadLinksVariables[playerName]["bankreagentitems"] = {}
     end
-    -- MBagsWowHeadLinksVariables[playerName]["bankitems"] = {}
-    -- MBagsWowHeadLinksVariables[playerName]["bankreagentitems"] = {}
     mBankItemsCurrentCache = MBagsWowHeadLinksVariables[playerName]["bankitems"]
     mBankRegItemsCurrentCache = MBagsWowHeadLinksVariables[playerName]["bankreagentitems"]
-
 end
 
 function mBagsWowHeadLinks:OnEnable()
@@ -246,10 +241,6 @@ function mBagsWowHeadLinks:BagPane()
                     local scrollFrm = AceGUI:Create("ScrollFrame")
                     scrollFrm:SetLayout("Fill")
                     scrollFrm:SetFullWidth(true)
-                    scrollFrm.content:SetScript("OnSizeChanged", function() 
-                        fixScrollBoxHeight(scrollFrm)
-                        scrollFrm:FixScroll()
-                    end)
 
                     -- print("Populating tab for expac: %s", expacName)
                     local expacInlineGroup = AceGUI:Create("InlineGroup")
@@ -358,6 +349,7 @@ function mBagsWowHeadLinks:BagPane()
     local currentIconSize = 24
 
     local base = AceGUI:Create("SimpleGroup")
+    base:SetHeight(300)
     MBagPane:AddChild(base)
 
     local urlInput = AceGUI:Create("EditBox")
@@ -404,6 +396,9 @@ function mBagsWowHeadLinks:BagPane()
     scrollContainer = AceGUI:Create("SimpleGroup") -- "InlineGroup" is also good
     scrollContainer:SetLayout("Fill")
     scrollContainer:SetFullWidth(true)
+    scrollContainer.content:SetScript("OnSizeChanged", function() 
+        fixScrollBoxHeight(scrollContainer)
+    end)
     dropDownMenu:AddChild(scrollContainer)
 
     local ignoreCBx = AceGUI:Create("CheckBox")
