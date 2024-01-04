@@ -349,7 +349,6 @@ function mBagsWowHeadLinks:BagPane()
     local currentIconSize = 24
 
     local base = AceGUI:Create("SimpleGroup")
-    base:SetHeight(300)
     MBagPane:AddChild(base)
 
     local urlInput = AceGUI:Create("EditBox")
