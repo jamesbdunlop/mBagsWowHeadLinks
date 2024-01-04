@@ -304,6 +304,9 @@ function mBagsWowHeadLinks:BagPane()
                             -- Note this doesn't work for all icons interActiveIcon:SetImage(C_Item.GetItemIconByID(icon))
                             interActiveIcon:SetImage(MWArtTexturePaths[icon])
                             interActiveIcon:SetImageSize(iconSize, iconSize)
+                            local font = "Interface\\AddOns\\mRadial\\fonts\\DejaVuSansMono.ttf"
+                            interActiveIcon.label:SetFont(font,  iconSize/6, "OUTLINE, MONOCHROME")
+
                             interActiveIcon:SetUserData("hyperlink", hyperlink)
                             interActiveIcon:SetUserData("url", url)
                             interActiveIcon:SetCallback("OnEnter", function(widget) 
