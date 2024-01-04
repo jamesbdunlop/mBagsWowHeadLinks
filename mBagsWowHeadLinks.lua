@@ -426,6 +426,7 @@ function mBagsWowHeadLinks:BagPane()
     searchGrp:AddChild(MBGSearchInput)
     searchGrp:AddChild(searchInputClear)
     searchGrp:AddChild(iconSize)
+    searchGrp:SetHeight(25)
     
     base:AddChild(urlInput)
     base:AddChild(searchGrp)
