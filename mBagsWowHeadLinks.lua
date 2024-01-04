@@ -1,6 +1,10 @@
 local AceGUI = LibStub("AceGUI-3.0")
 
+--# TODO take all the bank items even if soulbound or not into the cache!
+
 function mBagsWowHeadLinks:OnInitialize()
+
+
     if MBagsWowHeadLinksVariables == nil then
         MBagsWowHeadLinksVariables = {}
     end
@@ -15,8 +19,11 @@ function mBagsWowHeadLinks:OnInitialize()
     if not MBagsWowHeadLinksVariables[playerName]["bankreagentitems"] then
         MBagsWowHeadLinksVariables[playerName]["bankreagentitems"] = {}
     end
+    -- MBagsWowHeadLinksVariables[playerName]["bankitems"] = {}
+    -- MBagsWowHeadLinksVariables[playerName]["bankreagentitems"] = {}
     mBankItemsCurrentCache = MBagsWowHeadLinksVariables[playerName]["bankitems"]
     mBankRegItemsCurrentCache = MBagsWowHeadLinksVariables[playerName]["bankreagentitems"]
+
 end
 
 function mBagsWowHeadLinks:OnEnable()
@@ -25,16 +32,26 @@ end
 function mBagsWowHeadLinks:OnDisable()
 end
 
-function mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, datatable, ignoreSoulBound)
+function mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, datatable, ignoreSoulBound, itemLink)
+    local _, _, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent = GetItemInfo(itemLink)
     local url = "https://www.wowhead.com/item="..itemInfo["itemID"].."#comments"
     local finalurl = "|Hurl:" ..url .. "|h[" .. itemName .. "]|h"
     local isBound = itemInfo['isBound']
-    if not ignoreSoulBound and isBound then
-        table.insert(datatable, {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"]})
-    elseif ignoreSoulBound and isBound then
-    else
-        table.insert(datatable, {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"]})
+    if not ignoreSoulBound then
+        datatable[itemName] = {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"], itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent}
+    elseif ignoreSoulBound and not isBound then
+        datatable[itemName] = {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"], itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent}
     end
+end
+
+-- Function to get sorted keys
+function getSortedKeys(tbl)
+    local keys = {}
+    for key in pairs(tbl) do
+        table.insert(keys, key)
+    end
+    table.sort(keys)
+    return keys
 end
 
 function mBagsWowHeadLinks:listBagItems(ignoreSoulBound, seachString)
@@ -43,10 +60,10 @@ function mBagsWowHeadLinks:listBagItems(ignoreSoulBound, seachString)
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
             local itemLink = C_Container.GetContainerItemLink(bag, slot)
             if itemLink then
-                local itemName = GetItemInfo(itemLink)
+                local itemName = GetItemInfo(itemLink)                
                 local itemInfo = C_Container.GetContainerItemInfo(bag, slot)
                 if itemName ~= nil and itemInfo ~= nil and string.find(itemName, seachString) ~= nil then
-                    mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BAGDUMPV1, ignoreSoulBound)
+                    mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BAGDUMPV1, ignoreSoulBound, itemLink)
                 end
             end
         end
@@ -57,6 +74,7 @@ end
 
 function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
     -- (You need to be at the bank for bank inventory IDs to return valid results) WTF!
+    print("LISTING BANK ITEMS")
     BANKDUMPV1 = {}
     -- DO THE BASE BANK BAG FIRST
     for slot = 1, C_Container.GetContainerNumSlots(BANK_CONTAINER) do
@@ -65,7 +83,7 @@ function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
             local itemName = GetItemInfo(itemLink)
             local itemInfo = C_Container.GetContainerItemInfo(BANK_CONTAINER, slot)
             if itemName ~= nil and itemInfo ~= nil and string.find(itemName, seachString) ~= nil then
-                mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BANKDUMPV1, ignoreSoulBound)
+                mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BANKDUMPV1, ignoreSoulBound, itemLink)
             end
         end
     end
@@ -77,25 +95,31 @@ function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
                 local itemName = GetItemInfo(itemLink)
                 local itemInfo = C_Container.GetContainerItemInfo(bag, slot)
                 if itemName ~= nil and itemInfo ~= nil and string.find(itemName, seachString) ~= nil then
-                    mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BANKDUMPV1, ignoreSoulBound)
+                    mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BANKDUMPV1, ignoreSoulBound, itemLink)
                 end
             end
         end
     end
-    if #BANKDUMPV1 == 0 then
+
+    -- Hacky shit cause #BANKDUMPV1 constantly returns 0
+    local lengthNum = 0
+    for k, v in pairs(BANKDUMPV1) do
+        lengthNum = lengthNum + 1
+    end
+    if lengthNum == 0 then
+        -- print("Using bank cache.")
         local searched = {}
-        for x, data in ipairs(mBankItemsCurrentCache) do
-            local itemName = data[1]
-            local itemInfo = data[2]
+        for itemName, data in pairs(mBankItemsCurrentCache) do
             if itemName ~= nil and string.find(itemName, seachString) ~= nil then
-                table.insert(searched, data)
+                searched[itemName] = data
             end
         end
         return searched
-    else
-        for idx, entry in ipairs(BANKDUMPV1) do
-            mBankItemsCurrentCache[idx] = entry
-        end
+    end
+    
+    -- print("Using open bank. Caching items now.")
+    for itemName, data in pairs(BANKDUMPV1) do
+        mBankItemsCurrentCache[itemName] = data
     end
     return BANKDUMPV1
 end
@@ -109,24 +133,30 @@ function mBagsWowHeadLinks:listBankReagentItems(ignoreSoulBound, seachString)
             local itemName = GetItemInfo(itemLink)
             local itemInfo = C_Container.GetContainerItemInfo(REAGENTBANK_CONTAINER, slot)
             if itemName ~= nil and itemInfo ~= nil and string.find(itemName, seachString) ~= nil then
-                mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BANKRDUMPV1, ignoreSoulBound)
+                mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BANKRDUMPV1, ignoreSoulBound, itemLink)
             end
         end
     end
-    if #BANKRDUMPV1 == 0 then
+
+    -- Hacky shit cause #BANKRDUMPV1 constantly returns 0
+    local lengthNum = 0
+    for k, v in pairs(BANKRDUMPV1) do 
+        lengthNum = lengthNum + 1
+    end
+    if lengthNum == 0 then
+        -- print("Using reagent bank cache.")
         local searched = {}
-        for x, data in ipairs(mBankRegItemsCurrentCache) do
-            local itemName = data[1]
-            local itemInfo = data[2]
+        for itemName, data in pairs(mBankRegItemsCurrentCache) do
             if itemName ~= nil and string.find(itemName, seachString) ~= nil then
-                table.insert(searched, data)
+                searched[itemName] = data
             end
         end
         return searched
-    else
-        for idx, entry in ipairs(BANKRDUMPV1) do
-            mBankRegItemsCurrentCache[idx] = entry
-        end
+    end
+    
+    -- print("Using open reagent bank. Caching items now.")
+    for itemName, data in pairs(BANKRDUMPV1) do
+        mBankRegItemsCurrentCache[itemName] = data
     end
     return BANKRDUMPV1
 end
@@ -137,57 +167,177 @@ local function fixScrollBoxHeight(scrollFrame)
     scrollFrame:SetHeight(newHeight)
 end
 
+function mBagsWowHeadLinks:TableContains(myTable, value)
+    for _, v in ipairs(myTable) do
+        if v == value then
+            return true
+        end
+    end
+
+    return false
+end
+
+WHB_EXPANSIONS = {}
+WHB_EXPANSIONS[1] =	"The Burning Crusade"
+WHB_EXPANSIONS[2] =	"Wrath of the Lich King"
+WHB_EXPANSIONS[3] =	"Cataclysm"
+WHB_EXPANSIONS[4] =	"Mists of Pandaria"
+WHB_EXPANSIONS[5] =	"Warlords of Draenor"
+WHB_EXPANSIONS[6] =	"Legion"
+WHB_EXPANSIONS[7] =	"Battle for Azeroth"
+WHB_EXPANSIONS[8] =	"Shadowlands"
+WHB_EXPANSIONS[9] =	"Dragonflight"
+
+local CURRENTEXPAC = "Dragonflight"
+
 function mBagsWowHeadLinks:BagPane()
     local function updateData(groupIndex, ignoreValue, seachString)
         if seachString == nil then seachString = "" end
         local toShow
         if groupIndex == 1 then
+            -- print("populating inventory items now")
             toShow = mBagsWowHeadLinks:listBagItems(ignoreValue, seachString)
         elseif groupIndex == 2 then
+            -- print("populating bank items now")
             toShow = mBagsWowHeadLinks:listBankItems(ignoreValue, seachString)
         else
+            -- print("populating reagent items now")
             toShow = mBagsWowHeadLinks:listBankReagentItems(ignoreValue, seachString)
         end
         return toShow
     end
 
-    local function PopulateDropdown(toShow, scrollFrame, editBox, iconSize)
-        scrollFrame:ReleaseChildren()
-        for _, itemInfo in ipairs(toShow) do
-            local itemName = itemInfo[1]
-            local icon = itemInfo[2]
-            -- local clickableUrl = itemInfo[3]
-            local url = itemInfo[4]
-            local hyperlink = itemInfo[5]
-            local interActiveIcon = AceGUI:Create("Icon")
-            interActiveIcon:SetLabel(itemName)
-            -- Note this doesn't work for all icons interActiveIcon:SetImage(C_Item.GetItemIconByID(icon))
-            interActiveIcon:SetImage(MWArtTexturePaths[icon])
-            interActiveIcon:SetImageSize(iconSize, iconSize)
-            interActiveIcon:SetUserData("hyperlink", hyperlink)
-            interActiveIcon:SetUserData("url", url)
-            interActiveIcon:SetCallback("OnEnter", function(widget) 
-                GameTooltip:SetOwner(widget.frame, "ANCHOR_BOTTOMRIGHT")
-                GameTooltip:SetHyperlink(widget:GetUserData("hyperlink")) 
-                GameTooltip:SetSize(80, 50) 
-                GameTooltip:SetWidth(80) GameTooltip:Show() 
-            end)
-            interActiveIcon:SetCallback("OnLeave", function() 
-                GameTooltip:SetOwner(UIParent, "ANCHOR_BOTTOMRIGHT")
-                 GameTooltip:SetText("")
-                 GameTooltip:SetSize(80, 50) 
-                 GameTooltip:SetWidth(80) 
-                 GameTooltip:Show() end)
-            interActiveIcon:SetCallback("OnClick", function(widget) 
-                editBox:SetText(widget:GetUserData("url"))
-                editBox:SetFocus()
-                editBox:HighlightText(1, 2500)
-                local hyperlink = "|cff007995|Hurl:" .. url .."|h[".. itemName .."]|h|r"
-                print(hyperlink)
-            end)
-            
-            scrollFrame:AddChild(interActiveIcon)
+    local function PopulateDropdown(toShow, scrollContainer, editBox, iconSize)
+        scrollContainer:ReleaseChildren()
+        sortedKeys = getSortedKeys(toShow)
+        
+        -- FIND EXPANSIONS ITEMS BELONG TO SO WE CAN CREATE A TAB LAYOUT FOR ITEMS BASED ON EXPAC
+        local expacs = {}
+        for _, key in ipairs(sortedKeys) do
+            local itemInfo = toShow[key]
+            local expacID = itemInfo[19]
+            local expacName = WHB_EXPANSIONS[expacID]
+            if not mBagsWowHeadLinks:TableContains(expacs, expacName) then
+                table.insert(expacs, expacName)
+            end
         end
+
+        local tabHeaders = {}
+        for _, expName in ipairs(expacs) do
+            table.insert(tabHeaders, {value = expName, text = expName})
+        end
+
+        -- CREATE THE EXPANSION TABS NOW
+        local expacTabGroup = AceGUI:Create("TabGroup")
+        expacTabGroup:SetTitle("Expansions")
+        expacTabGroup:SetTabs(tabHeaders)
+        
+        scrollContainer:AddChild(expacTabGroup)
+        
+        -- Function to populate the tabs when they are selected.
+        function buildTabData(group)
+            group:ReleaseChildren()
+            for _, expacName in ipairs(expacs) do
+                if expacName == CURRENTEXPAC then
+                    local scrollFrm = AceGUI:Create("ScrollFrame")
+                    scrollFrm:SetLayout("Fill")
+                    scrollFrm:SetFullWidth(true)
+                    scrollFrm.content:SetScript("OnSizeChanged", function() 
+                        fixScrollBoxHeight(scrollFrm)
+                        scrollFrm:FixScroll()
+                    end)
+
+                    -- print("Populating tab for expac: %s", expacName)
+                    local expacInlineGroup = AceGUI:Create("InlineGroup")
+                    expacInlineGroup:SetTitle(expacName)
+                    expacInlineGroup:SetFullWidth(true)
+                    
+                    -- Crafted
+                    local craftedFrame = AceGUI:Create("InlineGroup")
+                    craftedFrame:SetTitle("CRAFTING")
+                    craftedFrame:SetLayout("Flow")
+                    craftedFrame:SetFullWidth(true)
+                    local craftedLabel = AceGUI:Create("Label")
+                    
+                    -- Stuff
+                    local stuffFrame = AceGUI:Create("InlineGroup")
+                    stuffFrame:SetTitle("STUFF")
+                    stuffFrame:SetLayout("Flow")
+                    stuffFrame:SetFullWidth(true)
+                    
+                    expacInlineGroup:AddChild(craftedFrame)
+                    expacInlineGroup:AddChild(stuffFrame)
+                    
+                    scrollFrm:AddChild(expacInlineGroup)
+                    group:AddChild(scrollFrm)
+                    
+                    for _, key in ipairs(sortedKeys) do
+                        itemInfo = toShow[key]
+                        local expacID = itemInfo[19]
+                        local itemExpacName = WHB_EXPANSIONS[expacID]
+                        if itemExpacName == CURRENTEXPAC then 
+                            local itemName = itemInfo[1]
+                            local icon = itemInfo[2]
+                            -- local clickableUrl = itemInfo[3]
+                            local url = itemInfo[4]
+                            local hyperlink = itemInfo[5]
+                            local itemLink = itemInfo[6] 
+                            local itemQuality = itemInfo[7] 
+                            local itemLevel = itemInfo[8]
+                            local itemMinLevel = itemInfo[9]
+                            local itemType = itemInfo[10]
+                            local itemSubType = itemInfo[11]
+                            local itemStackCount = itemInfo[12]
+                            local itemEquipLoc = itemInfo[13]
+                            local itemTexture = itemInfo[14]
+                            local sellPrice = itemInfo[15]
+                            local classID = itemInfo[16]
+                            local subclassID = itemInfo[17]
+                            local bindType = itemInfo[18]
+                            local setID = itemInfo[20]
+                            local isCraftingReagent = itemInfo[21]
+                            -- ICON
+                            local interActiveIcon = AceGUI:Create("Icon")
+                            interActiveIcon:SetLabel(itemName)
+                            -- Note this doesn't work for all icons interActiveIcon:SetImage(C_Item.GetItemIconByID(icon))
+                            interActiveIcon:SetImage(MWArtTexturePaths[icon])
+                            interActiveIcon:SetImageSize(iconSize, iconSize)
+                            interActiveIcon:SetUserData("hyperlink", hyperlink)
+                            interActiveIcon:SetUserData("url", url)
+                            interActiveIcon:SetCallback("OnEnter", function(widget) 
+                                GameTooltip:SetOwner(widget.frame, "ANCHOR_BOTTOMRIGHT")
+                                GameTooltip:SetHyperlink(widget:GetUserData("hyperlink")) 
+                                GameTooltip:SetSize(80, 50) 
+                                GameTooltip:SetWidth(80) GameTooltip:Show() 
+                            end)
+                            interActiveIcon:SetCallback("OnLeave", function() 
+                                GameTooltip:SetOwner(UIParent, "ANCHOR_BOTTOMRIGHT")
+                                GameTooltip:SetText("")
+                                GameTooltip:SetSize(80, 50) 
+                                GameTooltip:SetWidth(80) 
+                                GameTooltip:Show() end)
+                            interActiveIcon:SetCallback("OnClick", function(widget) 
+                                editBox:SetText(widget:GetUserData("url"))
+                                editBox:SetFocus()
+                                editBox:HighlightText(1, 2500)
+                                local hyperlink = "|cff007995|Hurl:" .. url .."|h[".. itemName .."]|h|r"
+                                print(hyperlink)
+                            end)
+                            
+                            -- scrollContainer:AddChild(interActiveIcon)
+                            if isCraftingReagent then craftedFrame:AddChild(interActiveIcon) 
+                            else stuffFrame:AddChild(interActiveIcon) end
+                        end
+                    end
+                end
+            end
+        end
+
+        expacTabGroup:SetCallback("OnTabEnter", function(self, event, tabName)
+            CURRENTEXPAC = tabName
+        end)
+        expacTabGroup:SetCallback("OnGroupSelected", buildTabData)
+        expacTabGroup:SelectTab("Dragonflight")
     end
 
     MBagPane = AceGUI:Create("Window")
@@ -197,7 +347,8 @@ function mBagsWowHeadLinks:BagPane()
     MBagPane:SetTitle("Bags: WowHead Url Generator") 
     MBagPane:SetLayout("Fill")
     MBagPane:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
-    local scrollFrame
+    
+    local scrollContainer
     local currGroupIndex = 1
     local ignoreValue
     local currentIconSize = 24
@@ -216,7 +367,7 @@ function mBagsWowHeadLinks:BagPane()
     searchInput:SetLabel("Search:")
     searchInput:SetCallback("OnTextChanged", function(self, event, value)
         local bagData = updateData(currGroupIndex, ignoreValue, value)
-        PopulateDropdown(bagData, scrollFrame, urlInput, currentIconSize)
+        PopulateDropdown(bagData, scrollContainer, urlInput, currentIconSize)
     end)
     
     local searchInputClear = AceGUI:Create("Button")
@@ -225,7 +376,7 @@ function mBagsWowHeadLinks:BagPane()
     searchInputClear:SetCallback("OnClick", function()
         searchInput:SetText("")
         local bagData = updateData(currGroupIndex, ignoreValue, "")
-        PopulateDropdown(bagData, scrollFrame, urlInput, currentIconSize)
+        PopulateDropdown(bagData, scrollContainer, urlInput, currentIconSize)
     end)
 
     local iconSize = AceGUI:Create("Slider")
@@ -236,7 +387,7 @@ function mBagsWowHeadLinks:BagPane()
     iconSize:SetCallback("OnValueChanged", function(self, event, value) 
         local bagData = updateData(currGroupIndex, ignoreValue)
         currentIconSize = value
-        PopulateDropdown(bagData, scrollFrame, urlInput, iconSize:GetValue())
+        PopulateDropdown(bagData, scrollContainer, urlInput, iconSize:GetValue())
     end)
 
     ------------------------------------------------------
@@ -246,19 +397,10 @@ function mBagsWowHeadLinks:BagPane()
     dropDownMenu:SetLayout("Flow")
     dropDownMenu:SetFullWidth(true)
 
-    local scrollcontainer = AceGUI:Create("InlineGroup") -- "InlineGroup" is also good
-    scrollcontainer:SetLayout("Flow")
-    scrollcontainer:SetFullWidth(true)
-    dropDownMenu:AddChild(scrollcontainer)
-    
-    scrollFrame = AceGUI:Create("ScrollFrame")
-    scrollFrame:SetLayout("Flow")
-    scrollFrame:SetFullWidth(true)
-    scrollcontainer:AddChild(scrollFrame)
-    scrollFrame.content:SetScript("OnSizeChanged", function() 
-        fixScrollBoxHeight(scrollFrame)
-        scrollFrame:FixScroll()
-    end)
+    scrollContainer = AceGUI:Create("SimpleGroup") -- "InlineGroup" is also good
+    scrollContainer:SetLayout("Fill")
+    scrollContainer:SetFullWidth(true)
+    dropDownMenu:AddChild(scrollContainer)
 
     local ignoreCBx = AceGUI:Create("CheckBox")
     ignoreValue = true
@@ -269,12 +411,12 @@ function mBagsWowHeadLinks:BagPane()
     ignoreCBx:SetCallback("OnValueChanged", function(widget, eventName, value) 
                         ignoreValue= value
                         local bagData = updateData(currGroupIndex, value)
-                        PopulateDropdown(bagData, scrollFrame, urlInput, iconSize:GetValue()) end)
+                        PopulateDropdown(bagData, scrollContainer, urlInput, iconSize:GetValue()) end)
     
     dropDownMenu:SetCallback("OnGroupSelected", function(self, event, groupIndex)
         currGroupIndex = groupIndex
         local bagData = updateData(currGroupIndex, ignoreValue)
-        PopulateDropdown(bagData, scrollFrame, urlInput, iconSize:GetValue())
+        PopulateDropdown(bagData, scrollContainer, urlInput, iconSize:GetValue())
     end)
 
     dropDownMenu:SetGroup(1)
