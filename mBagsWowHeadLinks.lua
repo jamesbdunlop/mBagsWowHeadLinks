@@ -169,9 +169,10 @@ function mBagsWowHeadLinks:listBankReagentItems(ignoreSoulBound, seachString)
     return BANKRDUMPV1
 end
 
-local function fixScrollBoxHeight(scrollFrame)
+local function fixScrollBoxHeight(scrollFrame, offset)
     local height = MBagPane.frame:GetHeight()
-    local newHeight = (height-235)
+    if offset == nil then offset = 235 end
+    local newHeight = (height-offset)
     scrollFrame:SetHeight(newHeight)
 end
 
@@ -252,7 +253,9 @@ function mBagsWowHeadLinks:BagPane()
                     local scrollFrm = AceGUI:Create("ScrollFrame")
                     scrollFrm:SetLayout("Flow")
                     scrollFrm:SetFullWidth(true)
-
+                    scrollFrm.content:SetScript("OnSizeChanged", function() 
+                        fixScrollBoxHeight(scrollFrm, 310)
+                    end)
                     -- print("Populating tab for expac: %s", expacName)
                     local expacInlineGroup = AceGUI:Create("SimpleGroup")
                     expacInlineGroup:SetFullWidth(true)
