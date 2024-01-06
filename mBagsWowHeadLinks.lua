@@ -342,7 +342,8 @@ function mBagsWowHeadLinks:BagPane()
         end)
         expacTabGroup:SelectTab(CURRENTEXPAC)
     end
-
+    if MBagPane ~= nil then return MBagPane end
+    
     MBagPane = AceGUI:Create("Window")
     MBagPane:SetWidth(800)
     MBagPane:SetHeight(600)
