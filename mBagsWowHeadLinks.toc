@@ -10,6 +10,5 @@
 embeds.xml 
 addon.lua
 
-core\ArtTextureID.lua
 mBagsWowHeadLinks.lua
 core\slashcmds.lua

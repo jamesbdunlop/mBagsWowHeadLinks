@@ -239,12 +239,12 @@ function mBagsWowHeadLinks:BagPane()
 
         -- CREATE THE EXPANSION TABS NOW
         local expacTabGroup = AceGUI:Create("TabGroup")
-        expacTabGroup:SetTitle("Expansions")
         expacTabGroup:SetTabs(tabHeaders)
         
         scrollContainer:AddChild(expacTabGroup)
         
         -- Function to populate the tabs when they are selected.
+        local previousTypeSelection = "Reagents"
         expacTabGroup:SetCallback("OnGroupSelected",  function(group, event, title)
             CURRENTEXPAC = title
             group:ReleaseChildren()
@@ -256,94 +256,91 @@ function mBagsWowHeadLinks:BagPane()
                     scrollFrm.content:SetScript("OnSizeChanged", function() 
                         fixScrollBoxHeight(scrollFrm, 310)
                     end)
-                    -- print("Populating tab for expac: %s", expacName)
-                    local expacInlineGroup = AceGUI:Create("SimpleGroup")
-                    expacInlineGroup:SetFullWidth(true)
-                    expacInlineGroup.content:SetScript("OnSizeChanged", function() 
-                        fixScrollBoxHeight(expacInlineGroup)
-                    end)
-                    -- Crafted
-                    local craftedFrame = AceGUI:Create("InlineGroup")
-                    craftedFrame:SetTitle("REAGENTS")
-                    craftedFrame:SetLayout("Flow")
-                    craftedFrame:SetFullWidth(true)
-                  
-                    -- Stuff
-                    local stuffFrame = AceGUI:Create("InlineGroup")
-                    stuffFrame:SetTitle("ITEMS")
-                    stuffFrame:SetLayout("Flow")
-                    stuffFrame:SetFullWidth(true)
-                    for _, key in ipairs(sortedKeys) do
-                        itemInfo = toShow[key]
-                        local expacID = itemInfo[19]
-                        local itemExpacName = WHB_EXPANSIONS[expacID]
-                        if itemExpacName == CURRENTEXPAC then 
-                            local itemName = itemInfo[1]
-                            local icon = itemInfo[2]
-                            -- local clickableUrl = itemInfo[3]
-                            local url = itemInfo[4]
-                            local hyperlink = itemInfo[5]
-                            local itemLink = itemInfo[6] 
-                            local itemQuality = itemInfo[7] 
-                            local itemLevel = itemInfo[8]
-                            local itemMinLevel = itemInfo[9]
-                            local itemType = itemInfo[10]
-                            local itemSubType = itemInfo[11]
-                            local itemStackCount = itemInfo[12]
-                            local itemEquipLoc = itemInfo[13]
-                            local itemTexture = itemInfo[14]
-                            local sellPrice = itemInfo[15]
-                            local classID = itemInfo[16]
-                            local subclassID = itemInfo[17]
-                            local bindType = itemInfo[18]
-                            local setID = itemInfo[20]
-                            local isCraftingReagent = itemInfo[21]
-                            -- ICON
-                            local interActiveIcon = AceGUI:Create("Icon")
-                            interActiveIcon:SetLabel(itemName)
-                            -- Note this doesn't work for all icons interActiveIcon:SetImage(C_Item.GetItemIconByID(icon))
-                            interActiveIcon:SetImage(MWArtTexturePaths[icon])
-                            interActiveIcon:SetImageSize(iconSize, iconSize)
-                            local font = "Fonts\\FRIZQT__.TTF"
-                            interActiveIcon.label:SetFont(font,  iconSize/4, "OUTLINE, MONOCHROME")
-
-                            interActiveIcon:SetUserData("hyperlink", hyperlink)
-                            interActiveIcon:SetUserData("url", url)
-                            interActiveIcon:SetCallback("OnEnter", function(widget) 
-                                GameTooltip:SetOwner(widget.frame, "ANCHOR_BOTTOMRIGHT")
-                                GameTooltip:SetHyperlink(widget:GetUserData("hyperlink")) 
-                                GameTooltip:SetSize(80, 50) 
-                                GameTooltip:SetWidth(80) GameTooltip:Show() 
-                            end)
-                            interActiveIcon:SetCallback("OnLeave", function() 
-                                GameTooltip:SetOwner(UIParent, "ANCHOR_BOTTOMRIGHT")
-                                GameTooltip:SetText("")
-                                GameTooltip:SetSize(80, 50) 
-                                GameTooltip:SetWidth(80) 
-                                GameTooltip:Show() end)
-                            interActiveIcon:SetCallback("OnClick", function(widget) 
-                                editBox:SetText(widget:GetUserData("url"))
-                                editBox:SetFocus()
-                                editBox:HighlightText(1, 2500)
-                                local hyperlink = "|cff007995|Hurl:" .. url .."|h[".. itemName .."]|h|r"
-                                -- print(hyperlink)
-                            end)
-                            if isCraftingReagent then craftedFrame:AddChild(interActiveIcon) 
-                            else stuffFrame:AddChild(interActiveIcon) end
-                        end
-                    end
-                    if #craftedFrame.frame:GetChildren() >= 0 then expacInlineGroup:AddChild(craftedFrame) end
-                    if #stuffFrame.frame:GetChildren() >= 0 then expacInlineGroup:AddChild(stuffFrame) end
                     
-                    scrollFrm.content.obj:AddChild(expacInlineGroup)
+                    local typesTabHeaders = {}
+                    table.insert(typesTabHeaders, {value = "Reagents", text = "Reagents", userdata = {tabName = "Reagents"}})
+                    table.insert(typesTabHeaders, {value = "Items", text = "Items", userdata = {tabName = "Items"}})
+                    
+                    local typesTabGroup = AceGUI:Create("TabGroup")
+                    typesTabGroup:SetFullWidth(true)
+                    typesTabGroup:SetTabs(typesTabHeaders)
+                    typesTabGroup:SetCallback("OnGroupSelected",  function(group, event, title)
+                        previousTypeSelection = title
+                        typesTabGroup:ReleaseChildren()
+                        for _, key in ipairs(sortedKeys) do
+                            itemInfo = toShow[key]
+                            local expacID = itemInfo[19]
+                            local itemExpacName = WHB_EXPANSIONS[expacID]
+                            if itemExpacName == CURRENTEXPAC then 
+                                local itemName = itemInfo[1]
+                                local icon = itemInfo[2]
+                                -- local clickableUrl = itemInfo[3]
+                                local url = itemInfo[4]
+                                local hyperlink = itemInfo[5]
+                                local itemLink = itemInfo[6] 
+                                local itemQuality = itemInfo[7] 
+                                local itemLevel = itemInfo[8]
+                                local itemMinLevel = itemInfo[9]
+                                local itemType = itemInfo[10]
+                                local itemSubType = itemInfo[11]
+                                local itemStackCount = itemInfo[12]
+                                local itemEquipLoc = itemInfo[13]
+                                local itemTexture = itemInfo[14]
+                                local sellPrice = itemInfo[15]
+                                local classID = itemInfo[16]
+                                local subclassID = itemInfo[17]
+                                local bindType = itemInfo[18]
+                                local setID = itemInfo[20]
+                                local isCraftingReagent = itemInfo[21]
+                                
+                                -- ICON
+                                local interActiveIcon = AceGUI:Create("Icon")
+                                interActiveIcon:SetLabel(itemName)
+                                -- Note this doesn't work for all icons interActiveIcon:SetImage(C_Item.GetItemIconByID(icon))
+                                interActiveIcon:SetImage(itemTexture)
+                                interActiveIcon:SetImageSize(iconSize, iconSize)
+                                -- CHANGE FONT WITH ICON SIZE
+                                local font = "Fonts\\FRIZQT__.TTF"
+                                interActiveIcon.label:SetFont(font,  iconSize/4, "OUTLINE, MONOCHROME")
+                                
+                                interActiveIcon:SetUserData("hyperlink", hyperlink)
+                                interActiveIcon:SetUserData("url", url)
+                                interActiveIcon:SetCallback("OnEnter", function(widget) 
+                                    GameTooltip:SetOwner(widget.frame, "ANCHOR_BOTTOMRIGHT")
+                                    GameTooltip:SetHyperlink(widget:GetUserData("hyperlink")) 
+                                    GameTooltip:SetSize(80, 50) 
+                                    GameTooltip:SetWidth(80) GameTooltip:Show() 
+                                end)
+                                interActiveIcon:SetCallback("OnLeave", function() 
+                                    GameTooltip:SetOwner(UIParent, "ANCHOR_BOTTOMRIGHT")
+                                    GameTooltip:SetText("")
+                                    GameTooltip:SetSize(80, 50) 
+                                    GameTooltip:SetWidth(80) 
+                                    GameTooltip:Show() end)
+                                interActiveIcon:SetCallback("OnClick", function(widget) 
+                                    editBox:SetText(widget:GetUserData("url"))
+                                    editBox:SetFocus()
+                                    editBox:HighlightText(1, 2500)
+                                    local hyperlink = "|cff007995|Hurl:" .. url .."|h[".. itemName .."]|h|r"
+                                end)
+                                group.content.obj:SetLayout("Flow")
+                                if isCraftingReagent and title == "Reagents" then 
+                                    group.content.obj:AddChild(interActiveIcon)
+                                elseif not isCraftingReagent and title == "Items" then 
+                                    group.content.obj:AddChild(interActiveIcon) 
+                                end
+                            end
+                        end
+                    end)
+                    typesTabGroup:SelectTab(previousTypeSelection)
+                    scrollFrm.content.obj:AddChild(typesTabGroup)
                     group.content.obj:AddChild(scrollFrm)
                 end
             end
         end)
         expacTabGroup:SelectTab(CURRENTEXPAC)
     end
-    if MBagPane ~= nil then return MBagPane end
-    
+
     MBagPane = AceGUI:Create("Window")
     MBagPane:SetWidth(800)
     MBagPane:SetHeight(600)
@@ -405,7 +402,7 @@ function mBagsWowHeadLinks:BagPane()
 
     ------------------------------------------------------
     local dropDownMenu = AceGUI:Create("DropdownGroup")
-    dropDownMenu:SetTitle("Select:")
+    dropDownMenu:SetTitle("Expansions:")
     dropDownMenu:SetGroupList({"Inventory", "Bank", "Bank Reagents"})
     dropDownMenu:SetLayout("Flow")
     dropDownMenu:SetFullWidth(true)
