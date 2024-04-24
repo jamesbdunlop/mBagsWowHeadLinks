@@ -39,15 +39,46 @@ end
 function mBagsWowHeadLinks:OnDisable()
 end
 
-function mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, datatable, ignoreSoulBound, itemLink)
+local UPGRADEDB = {}
+UPGRADEDB[9568] = "h1/6"
+UPGRADEDB[9569] = "h2/6"
+UPGRADEDB[9570] = "h3/6"
+UPGRADEDB[9571] = "h4/6"
+UPGRADEDB[9572] = "h5/6"
+UPGRADEDB[9581] = "h6/6"
+UPGRADEDB[9668] = "m1/6"
+UPGRADEDB[9669] = "m2/6"
+UPGRADEDB[9670] = "m3/6"
+UPGRADEDB[9671] = "m4/6"
+UPGRADEDB[9672] = "m5/6"
+UPGRADEDB[9681] = "m6/6"
+
+function mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, datatable, ignoreSoulBound, itemLink, bag, slot)
     local _, _, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent = GetItemInfo(itemLink)
     local url = "https://www.wowhead.com/item="..itemInfo["itemID"].."#comments"
     local finalurl = "|Hurl:" ..url .. "|h[" .. itemName .. "]|h"
-    local isBound = itemInfo['isBound']
+    local isBound = itemInfo['isBound']    
+    
+    -- For checking upgrade level from the linkString
+    local baseItemLoc = ItemLocation:CreateFromBagAndSlot(bag, slot)
+    -- print(C_Item.GetCurrentItemLevel(baseItemLoc)) -- returns current ilvl for item correctly.
+    local CItemUpgrade = C_ItemUpgrade
+    local canUpgrade = CItemUpgrade.CanUpgradeItem(baseItemLoc)
+    local preStringValid, preString, hyperlinkString, postString = ExtractHyperlinkString(itemLink)
+    local upgradeLevel
+    if not isCraftingReagent and canUpgrade then
+        -- local itemID, enchantID, gemID1, gemID2, gemID3, gemID4, suffixID, uniqueID, linkLevel, specializationID, modifiersMask, itemContext, numBonusIDs, numModifiers, relic1NumBonusIDs, relic2NumBonusIDs, relic3NumBonusIDs, crafterGUID, extraEnchantID = strsplit(":", hyperlinkString)
+        -- print(itemID, enchantID, gemID1, gemID2, gemID3, gemID4, suffixID, uniqueID, linkLevel, specializationID, modifiersMask, itemContext, numBonusIDs, numModifiers, relic1NumBonusIDs, relic2NumBonusIDs, relic3NumBonusIDs, crafterGUID, extraEnchantID)
+        local relic1NumBonusIDs = select(15,  strsplit(":", hyperlinkString))
+        -- local relic2NumBonusIDs = select(16,  strsplit(":", hyperlinkString))
+        -- local relic3NumBonusIDs = select(17,  strsplit(":", hyperlinkString))
+        upgradeLevel = UPGRADEDB[tonumber(relic1NumBonusIDs)]
+    end
+    
     if not ignoreSoulBound then
-        datatable[itemName] = {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"], itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent}
+        datatable[itemName] = {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"], itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent, upgradeLevel}
     elseif ignoreSoulBound and not isBound then
-        datatable[itemName] = {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"], itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent}
+        datatable[itemName] = {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"], itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent, upgradeLevel}
     end
 end
 
@@ -72,7 +103,7 @@ function mBagsWowHeadLinks:listBagItems(ignoreSoulBound, seachString)
                 expacID, setID, isCraftingReagent = GetItemInfo(itemLink)                
                 local itemInfo = C_Container.GetContainerItemInfo(bag, slot)
                 if itemName ~= nil and itemInfo ~= nil and string.find(itemName, seachString) ~= nil then
-                    mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BAGDUMPV1, ignoreSoulBound, itemLink)
+                    mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BAGDUMPV1, ignoreSoulBound, itemLink, bag, slot)
                 end
             end
         end
@@ -91,7 +122,7 @@ function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
             local itemName = GetItemInfo(itemLink)
             local itemInfo = C_Container.GetContainerItemInfo(BANK_CONTAINER, slot)
             if itemName ~= nil and itemInfo ~= nil and string.find(itemName, seachString) ~= nil then
-                mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BANKDUMPV1, ignoreSoulBound, itemLink)
+                mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BANKDUMPV1, ignoreSoulBound, itemLink, BANK_CONTAINER, slot)
             end
         end
     end
@@ -103,7 +134,7 @@ function mBagsWowHeadLinks:listBankItems(ignoreSoulBound, seachString)
                 local itemName = GetItemInfo(itemLink)
                 local itemInfo = C_Container.GetContainerItemInfo(bag, slot)
                 if itemName ~= nil and itemInfo ~= nil and string.find(itemName, seachString) ~= nil then
-                    mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BANKDUMPV1, ignoreSoulBound, itemLink)
+                    mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BANKDUMPV1, ignoreSoulBound, itemLink, bag, slot)
                 end
             end
         end
@@ -141,7 +172,7 @@ function mBagsWowHeadLinks:listBankReagentItems(ignoreSoulBound, seachString)
             local itemName = GetItemInfo(itemLink)
             local itemInfo = C_Container.GetContainerItemInfo(REAGENTBANK_CONTAINER, slot)
             if itemName ~= nil and itemInfo ~= nil and string.find(itemName, seachString) ~= nil then
-                mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BANKRDUMPV1, ignoreSoulBound, itemLink)
+                mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, BANKRDUMPV1, ignoreSoulBound, itemLink, REAGENTBANK_CONTAINER, slot)
             end
         end
     end
@@ -197,6 +228,7 @@ WHB_EXPANSIONS[7] =	"Battle for Azeroth"
 WHB_EXPANSIONS[8] =	"Shadowlands"
 WHB_EXPANSIONS[9] =	"Dragonflight"
 local CURRENTEXPAC = "Dragonflight"
+local previousTypeSelection = "Reagents"
 
 function mBagsWowHeadLinks:BagPane()
     local function updateData(groupIndex, ignoreValue, seachString)
@@ -236,15 +268,14 @@ function mBagsWowHeadLinks:BagPane()
         for _, expName in ipairs(expacs) do
             table.insert(tabHeaders, {value = expName, text = expName, userdata = { tabName = expName}})
         end
-
+        
         -- CREATE THE EXPANSION TABS NOW
         local expacTabGroup = AceGUI:Create("TabGroup")
         expacTabGroup:SetTabs(tabHeaders)
-        
+        expacTabGroup:SelectTab(CURRENTEXPAC)
         scrollContainer:AddChild(expacTabGroup)
         
         -- Function to populate the tabs when they are selected.
-        local previousTypeSelection = "Reagents"
         expacTabGroup:SetCallback("OnGroupSelected",  function(group, event, title)
             CURRENTEXPAC = title
             group:ReleaseChildren()
@@ -267,12 +298,14 @@ function mBagsWowHeadLinks:BagPane()
                     typesTabGroup:SetCallback("OnGroupSelected",  function(group, event, title)
                         previousTypeSelection = title
                         typesTabGroup:ReleaseChildren()
+                        local items = {}
                         for _, key in ipairs(sortedKeys) do
                             itemInfo = toShow[key]
                             local expacID = itemInfo[19]
                             local itemExpacName = WHB_EXPANSIONS[expacID]
                             if itemExpacName == CURRENTEXPAC then 
                                 local itemName = itemInfo[1]
+                                
                                 local icon = itemInfo[2]
                                 -- local clickableUrl = itemInfo[3]
                                 local url = itemInfo[4]
@@ -292,6 +325,7 @@ function mBagsWowHeadLinks:BagPane()
                                 local bindType = itemInfo[18]
                                 local setID = itemInfo[20]
                                 local isCraftingReagent = itemInfo[21]
+                                local upgradeLevel = itemInfo[22]
                                 
                                 -- ICON
                                 local interActiveIcon = AceGUI:Create("Icon")
@@ -323,6 +357,27 @@ function mBagsWowHeadLinks:BagPane()
                                     editBox:HighlightText(1, 2500)
                                     local hyperlink = "|cff007995|Hurl:" .. url .."|h[".. itemName .."]|h|r"
                                 end)
+                                
+                                if not isCraftingReagent then
+                                    iLvlText = interActiveIcon.frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+                                    iLvlText:SetTextColor(1, 1, 1, 1)
+                                    iLvlText:SetPoint("CENTER", interActiveIcon.frame, "TOP", 0, -20)
+                                    iLvlText:SetJustifyH("CENTER")
+                                    iLvlText:SetJustifyV("TOP")
+                                    iLvlText:SetFont(font,  iconSize/4, "OUTLINE, MONOCHROME")
+                                    iLvlText:SetText(itemLevel)
+                                    
+                                    if upgradeLevel ~= nil then 
+                                        upGradeLvlText = interActiveIcon.frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+                                        upGradeLvlText:SetTextColor(1, 1, 1, 1)
+                                        upGradeLvlText:SetPoint("CENTER", interActiveIcon.frame, "CENTER", 0, 0)
+                                        upGradeLvlText:SetJustifyH("CENTER")
+                                        upGradeLvlText:SetJustifyV("TOP")
+                                        upGradeLvlText:SetFont(font,  iconSize/4, "OUTLINE, MONOCHROME")
+                                        upGradeLvlText:SetText(upgradeLevel)
+                                    end
+                                end
+
                                 group.content.obj:SetLayout("Flow")
                                 if isCraftingReagent and title == "Reagents" then 
                                     group.content.obj:AddChild(interActiveIcon)
