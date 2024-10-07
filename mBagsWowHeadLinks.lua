@@ -76,9 +76,9 @@ function mBagsWowHeadLinks:AddItemInfoToTable(itemName, itemInfo, datatable, ign
     end
     
     if not ignoreSoulBound then
-        datatable[itemName] = {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"], itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent, upgradeLevel}
+        datatable[itemName] = {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"], itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent, upgradeLevel, bag}
     elseif ignoreSoulBound and not isBound then
-        datatable[itemName] = {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"], itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent, upgradeLevel}
+        datatable[itemName] = {itemName, itemInfo["iconFileID"], finalurl, url, itemInfo["hyperlink"], itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subclassID, bindType, expacID, setID, isCraftingReagent, upgradeLevel, bag}
     end
 end
 
@@ -227,7 +227,9 @@ WHB_EXPANSIONS[6] =	"Legion"
 WHB_EXPANSIONS[7] =	"Battle for Azeroth"
 WHB_EXPANSIONS[8] =	"Shadowlands"
 WHB_EXPANSIONS[9] =	"Dragonflight"
-local CURRENTEXPAC = "Dragonflight"
+WHB_EXPANSIONS[10] = "The War Within"
+
+local CURRENTEXPAC = "The War Within"
 local previousTypeSelection = "Reagents"
 
 function mBagsWowHeadLinks:BagPane()
@@ -326,6 +328,7 @@ function mBagsWowHeadLinks:BagPane()
                                 local setID = itemInfo[20]
                                 local isCraftingReagent = itemInfo[21]
                                 local upgradeLevel = itemInfo[22]
+                                local container = itemInfo[23]
                                 
                                 -- ICON
                                 local interActiveIcon = AceGUI:Create("Icon")
@@ -351,11 +354,17 @@ function mBagsWowHeadLinks:BagPane()
                                     GameTooltip:SetSize(80, 50) 
                                     GameTooltip:SetWidth(80) 
                                     GameTooltip:Show() end)
-                                interActiveIcon:SetCallback("OnClick", function(widget) 
-                                    editBox:SetText(widget:GetUserData("url"))
-                                    editBox:SetFocus()
-                                    editBox:HighlightText(1, 2500)
-                                    local hyperlink = "|cff007995|Hurl:" .. url .."|h[".. itemName .."]|h|r"
+                                interActiveIcon:SetCallback("OnClick", function(widget, event, button)
+                                    print("button: %s", button)
+                                    if button == "LeftButton" then
+                                        editBox:SetText(widget:GetUserData("url"))
+                                        editBox:SetFocus()
+                                        editBox:HighlightText(1, 2500)
+                                        local hyperlink = "|cff007995|Hurl:" .. url .."|h[".. itemName .."]|h|r"
+                                    else
+                                        print("fart")
+                                        print(container)
+                                    end
                                 end)
                                 
                                 if not isCraftingReagent then
